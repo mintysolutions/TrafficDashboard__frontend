@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { UserService } from 'app/core/user/user.service';
 import { environment } from 'environments/environment';
 import { Observable, catchError, of, switchMap, throwError } from 'rxjs';
+import { handleErrorResponse } from '../helper/utils';
 import { User } from '../user/user.types';
 
 @Injectable({ providedIn: 'root' })
@@ -44,7 +45,7 @@ export class AuthService {
                 this._httpClient.post(`${this.backendUrl}/register`, user)
             ),
             switchMap(() => this.getUser()),
-            catchError((error) => throwError(() => error))
+            catchError(handleErrorResponse)
         );
     }
 
@@ -61,7 +62,7 @@ export class AuthService {
                 })
             ),
             switchMap(() => this.getUser()),
-            catchError((error) => throwError(() => error))
+            catchError(handleErrorResponse)
         );
     }
 
@@ -77,7 +78,7 @@ export class AuthService {
                     this._userService.user = null;
                     return of(true);
                 }),
-                catchError((error) => throwError(() => error))
+                catchError(handleErrorResponse)
             );
     }
 

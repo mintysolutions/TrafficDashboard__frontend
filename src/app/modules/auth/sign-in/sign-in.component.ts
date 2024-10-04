@@ -67,10 +67,7 @@ export class AuthSignInComponent implements OnInit {
     ngOnInit(): void {
         // Create the form
         this.signInForm = this._formBuilder.group({
-            email: [
-                'admin@admin.com',
-                [Validators.required, Validators.email],
-            ],
+            email: ['admin@admin.com', [Validators.required, Validators.email]],
             password: ['password', Validators.required],
             remember: [''],
         });
@@ -97,7 +94,7 @@ export class AuthSignInComponent implements OnInit {
 
         // Sign in
         this._authService.signIn(this.signInForm.value).subscribe(
-            () => {
+            (response) => {
                 // Set the redirect url.
                 // The '/signed-in-redirect' is a dummy url to catch the request and redirect the user
                 // to the correct page after a successful sign in. This way, that url can be set via
@@ -110,7 +107,7 @@ export class AuthSignInComponent implements OnInit {
                 // Navigate to the redirect url
                 this._router.navigateByUrl(redirectURL);
             },
-            (response) => {
+            (error) => {
                 // Re-enable the form
                 this.signInForm.enable();
 
@@ -120,7 +117,7 @@ export class AuthSignInComponent implements OnInit {
                 // Set the alert
                 this.alert = {
                     type: 'error',
-                    message: 'Wrong email or password',
+                    message: error?.message ?? 'Something went wrong!',
                 };
 
                 // Show the alert

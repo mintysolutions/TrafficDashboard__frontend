@@ -1,9 +1,11 @@
 import { CommonModule, CurrencyPipe, NgClass, NgIf } from '@angular/common';
 import {
     ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
     ViewChild,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -70,6 +72,7 @@ export class CountsCamComponent {
     @ViewChild(MatPaginator) paginator: MatPaginator;
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
+    private _changeDetectorRef = inject(ChangeDetectorRef);
 
     constructor(
         private _userService: UserService,
@@ -155,6 +158,7 @@ export class CountsCamComponent {
                 next: (selectedCamCounts) => {
                     console.log('selectedCamCounts :>> ', selectedCamCounts);
                     this.selectedCamCounts = selectedCamCounts;
+                    this._changeDetectorRef.detectChanges();
                 },
                 error: (err) =>
                     console.error(
