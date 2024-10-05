@@ -1,0 +1,61 @@
+<div class="w-full max-w-3xl">
+    <!-- Form -->
+    <form [formGroup]="securityForm">
+        <div class="mt-8 grid w-full gap-6 sm:grid-cols-4">
+            <!-- Current password -->
+            <div class="sm:col-span-4">
+                <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                    <mat-label>Current password</mat-label>
+                    <mat-icon
+                        class="icon-size-5"
+                        [svgIcon]="'heroicons_solid:key'"
+                        matPrefix
+                    ></mat-icon>
+                    <input
+                        [formControlName]="'currentPassword'"
+                        type="password"
+                        matInput
+                    />
+                </mat-form-field>
+            </div>
+            <!-- New password -->
+            <div class="sm:col-span-4">
+                <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                    <mat-label>New password</mat-label>
+                    <mat-icon
+                        class="icon-size-5"
+                        [svgIcon]="'heroicons_solid:key'"
+                        matPrefix
+                    ></mat-icon>
+                    <input
+                        [formControlName]="'newPassword'"
+                        type="password"
+                        matInput
+                    />
+                </mat-form-field>
+                <div class="text-hint mt-1 text-md">
+                    Minimum 8 characters. Must include numbers, letters and
+                    special characters.
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="my-10 border-t"></div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end">
+            <button mat-stroked-button type="button">Cancel</button>
+            <button
+                class="ml-4"
+                mat-flat-button
+                type="button"
+                [color]="'primary'"
+                [disabled]="securityForm.disabled"
+                (click)="changePassword()"
+            >
+                Save
+            </button>
+        </div>
+    </form>
+</div>

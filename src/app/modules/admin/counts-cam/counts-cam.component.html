@@ -1,0 +1,331 @@
+<div class="flex min-w-0 flex-auto flex-col">
+    <!-- Header -->
+    <div class="bg-card">
+        <div class="mx-auto flex w-full max-w-screen-xl flex-col px-6 sm:px-8">
+            <div
+                class="my-8 flex min-w-0 flex-auto flex-col sm:my-12 sm:flex-row sm:items-center"
+            >
+                <!-- Avatar and name -->
+                <div class="flex min-w-0 flex-auto items-center">
+                    <div class="h-16 w-16 flex-0 overflow-hidden rounded-full">
+                        @if (user.avatar) {
+                            <img
+                                class="h-full w-full object-cover"
+                                [src]="user.avatar"
+                            />
+                        }
+                        @if (!user.avatar) {
+                            <mat-icon
+                                class="h-full w-full"
+                                [svgIcon]="'heroicons_outline:user-circle'"
+                            ></mat-icon>
+                        }
+                    </div>
+                    <div class="ml-4 flex min-w-0 flex-col">
+                        <ng-container *transloco="let t">
+                            <div
+                                class="truncate text-2xl font-semibold leading-7 tracking-tight md:text-5xl md:leading-snug"
+                            >
+                                {{ t('welcome-back') }}, {{ user.name }}
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+                <!-- Actions -->
+                <!-- <div class="mt-6 flex items-center space-x-3 sm:ml-2 sm:mt-0">
+                    <button
+                        class="bg-accent"
+                        mat-flat-button
+                        [color]="'accent'"
+                    >
+                        <mat-icon
+                            class="icon-size-5"
+                            [svgIcon]="'heroicons_solid:envelope'"
+                        ></mat-icon>
+                        <span class="ml-2">Messages</span>
+                    </button>
+                    <button mat-flat-button [color]="'primary'">
+                        <mat-icon
+                            class="icon-size-5"
+                            [svgIcon]="'heroicons_solid:cog-8-tooth'"
+                        ></mat-icon>
+                        <span class="ml-2">Settings</span>
+                    </button>
+                </div> -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="flex-auto p-6 sm:p-10">
+        <!-- CONTENT GOES HERE -->
+        <div
+            class="h-400 max-h-400 min-h-400 rounded-2xl border-2 border-dashed border-gray-300"
+        >
+            <div
+                class="-mt-px flex flex-auto flex-col gap-8 border-t pt-4 sm:pt-6"
+            >
+                <div class="mx-auto mb-5 w-full max-w-screen-xl">
+                    <!-- Camera List Table -->
+                    <table
+                        mat-table
+                        [dataSource]="dataSource"
+                        class="full-width-table rounded-md shadow-none"
+                        matSort
+                    >
+                        <ng-container matColumnDef="id">
+                            <th mat-header-cell *matHeaderCellDef>ID</th>
+                            <td mat-cell *matCellDef="let element">
+                                {{ element.id }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="cam_ip">
+                            <th mat-header-cell *matHeaderCellDef>Camera IP</th>
+                            <td mat-cell *matCellDef="let element">
+                                {{ element.cam_ip }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="cam_name">
+                            <th mat-header-cell *matHeaderCellDef>
+                                Camera Name
+                            </th>
+                            <td mat-cell *matCellDef="let element">
+                                {{ element.cam_name }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="code">
+                            <th mat-header-cell *matHeaderCellDef>Code</th>
+                            <td mat-cell *matCellDef="let element">
+                                {{ element.code }}
+                            </td>
+                        </ng-container>
+
+                        <tr
+                            mat-header-row
+                            *matHeaderRowDef="displayedColumns"
+                        ></tr>
+                        <tr
+                            mat-row
+                            *matRowDef="let row; columns: displayedColumns"
+                            (click)="selectRow(row)"
+                            [class.selected]="selectedRow?.id === row.id"
+                            class="cursor-pointer hover:bg-gray-200"
+                            [ngClass]="{
+                                'bg-gray-300': selectedRow?.id === row.id,
+                            }"
+                        ></tr>
+                    </table>
+                    <mat-paginator [pageSize]="5"></mat-paginator>
+                </div>
+
+                <!-- Date Range Selector -->
+                <div
+                    class="mx-auto mb-5 flex w-full max-w-screen-xl justify-end"
+                >
+                    <div class="date-range-selector">
+                        <form
+                            [formGroup]="dateRangeForm"
+                            class="flex items-baseline gap-4"
+                            (ngSubmit)="filterByDateRange()"
+                        >
+                            <mat-form-field>
+                                <mat-label>Start Date</mat-label>
+                                <input
+                                    matInput
+                                    [matDatepicker]="startPicker"
+                                    formControlName="start"
+                                />
+                                <mat-datepicker-toggle
+                                    matSuffix
+                                    [for]="startPicker"
+                                ></mat-datepicker-toggle>
+                                <mat-datepicker #startPicker></mat-datepicker>
+                            </mat-form-field>
+
+                            <mat-form-field>
+                                <mat-label>End Date</mat-label>
+                                <input
+                                    matInput
+                                    [matDatepicker]="endPicker"
+                                    formControlName="end"
+                                />
+                                <mat-datepicker-toggle
+                                    matSuffix
+                                    [for]="endPicker"
+                                ></mat-datepicker-toggle>
+                                <mat-datepicker #endPicker></mat-datepicker>
+                            </mat-form-field>
+
+                            <button
+                                mat-raised-button
+                                color="primary"
+                                type="submit"
+                            >
+                                Filter
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Detail Stats -->
+                <div *ngIf="selectedCamCounts" class="detail-stats">
+                    <div
+                        class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
+                    >
+                        <div
+                            class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
+                        >
+                            <div class="flex items-start justify-between">
+                                <div
+                                    class="truncate text-lg font-medium leading-6 tracking-tight"
+                                >
+                                    Total Cars
+                                </div>
+                            </div>
+                            <div class="mt-2 flex flex-col items-center">
+                                <div
+                                    class="text-7xl font-bold leading-none tracking-tight text-blue-500 sm:text-8xl"
+                                >
+                                    {{ selectedCamCounts.total_cars }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
+                        >
+                            <div class="flex items-start justify-between">
+                                <div
+                                    class="truncate text-lg font-medium leading-6 tracking-tight"
+                                >
+                                    Total Buses
+                                </div>
+                            </div>
+                            <div class="mt-2 flex flex-col items-center">
+                                <div
+                                    class="text-7xl font-bold leading-none tracking-tight text-red-500 sm:text-8xl"
+                                >
+                                    {{ selectedCamCounts.total_buses }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
+                        >
+                            <div class="flex items-start justify-between">
+                                <div
+                                    class="truncate text-lg font-medium leading-6 tracking-tight"
+                                >
+                                    Total Trucks
+                                </div>
+                            </div>
+                            <div class="mt-2 flex flex-col items-center">
+                                <div
+                                    class="text-7xl font-bold leading-none tracking-tight text-amber-500 sm:text-8xl"
+                                >
+                                    {{ selectedCamCounts.total_trucks }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
+                        >
+                            <div class="flex items-start justify-between">
+                                <div
+                                    class="truncate text-lg font-medium leading-6 tracking-tight"
+                                >
+                                    Total Humans
+                                </div>
+                            </div>
+                            <div class="mt-2 flex flex-col items-center">
+                                <div
+                                    class="text-7xl font-bold leading-none tracking-tight text-green-500 sm:text-8xl"
+                                >
+                                    {{ selectedCamCounts.total_humans }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
+                        >
+                            <div class="flex items-start justify-between">
+                                <div
+                                    class="truncate text-lg font-medium leading-6 tracking-tight"
+                                >
+                                    Total Bikes
+                                </div>
+                            </div>
+                            <div class="mt-2 flex flex-col items-center">
+                                <div
+                                    class="text-7xl font-bold leading-none tracking-tight text-teal-500 sm:text-8xl"
+                                >
+                                    {{ selectedCamCounts.total_bikes }}
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
+                        >
+                            <div class="flex items-start justify-between">
+                                <div
+                                    class="truncate text-lg font-medium leading-6 tracking-tight"
+                                >
+                                    Total Objects
+                                </div>
+                            </div>
+                            <div class="mt-2 flex flex-col items-center">
+                                <div
+                                    class="text-7xl font-bold leading-none tracking-tight text-cyan-500 sm:text-8xl"
+                                >
+                                    {{ selectedCamCounts.total_objects }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Counts Chart -->
+                <div
+                    *ngIf="chartAllCameraCounts.chart"
+                    class="grid w-full min-w-0 grid-cols-1 lg:grid-cols-2"
+                >
+                    <div
+                        class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
+                    >
+                        <div class="flex items-start justify-between">
+                            <div
+                                class="truncate text-lg font-medium leading-6 tracking-tight"
+                            >
+                                Total Objects
+                            </div>
+                        </div>
+                        <div class="mt-2 flex flex-col items-center">
+                            <apx-chart
+                                class="h-80 w-full flex-auto"
+                                [chart]="chartAllCameraCounts.chart"
+                                [colors]="chartAllCameraCounts.colors"
+                                [dataLabels]="chartAllCameraCounts.dataLabels"
+                                [grid]="chartAllCameraCounts.grid"
+                                [labels]="chartAllCameraCounts.labels"
+                                [legend]="chartAllCameraCounts.legend"
+                                [plotOptions]="chartAllCameraCounts.plotOptions"
+                                [series]="chartAllCameraCounts.series"
+                                [states]="chartAllCameraCounts.states"
+                                [stroke]="chartAllCameraCounts.stroke"
+                                [tooltip]="chartAllCameraCounts.tooltip"
+                                [xaxis]="chartAllCameraCounts.xaxis"
+                                [yaxis]="chartAllCameraCounts.yaxis"
+                            ></apx-chart>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

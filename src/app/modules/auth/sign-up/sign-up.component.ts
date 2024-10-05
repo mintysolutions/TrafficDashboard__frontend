@@ -69,7 +69,6 @@ export class AuthSignUpComponent implements OnInit {
             name: ['', Validators.required],
             email: ['', [Validators.required, Validators.email]],
             password: ['', Validators.required],
-            company: [''],
             agreements: ['', Validators.requiredTrue],
         });
     }
@@ -94,7 +93,13 @@ export class AuthSignUpComponent implements OnInit {
         this.showAlert = false;
 
         // Sign up
-        this._authService.signUp(this.signUpForm.value).subscribe(
+        const entity = {
+            name: this.signUpForm.value.name,
+            email: this.signUpForm.value.email,
+            password: this.signUpForm.value.password,
+            password_confirmation: this.signUpForm.value.password,
+        };
+        this._authService.signUp(entity).subscribe(
             (response) => {
                 // Navigate to the confirmation required page
                 this._router.navigateByUrl('/confirmation-required');

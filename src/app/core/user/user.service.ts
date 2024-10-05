@@ -1,13 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { User } from 'app/core/user/user.types';
+import { environment } from 'environments/environment';
 import { map, Observable, ReplaySubject, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
     private _httpClient = inject(HttpClient);
     private _user: ReplaySubject<User> = new ReplaySubject<User>(1);
-
+    private backendUrl = environment.backendUrl;
     // -----------------------------------------------------------------------------------------------------
     // @ Accessors
     // -----------------------------------------------------------------------------------------------------
@@ -34,11 +35,13 @@ export class UserService {
      * Get the current signed-in user data
      */
     get(): Observable<User> {
-        return this._httpClient.get<User>('api/common/user').pipe(
-            tap((user) => {
-                this._user.next(user);
-            })
-        );
+        return this._httpClient
+            .get<User>(`${this.backendUrl}/api/user`, { withCredentials: true })
+            .pipe(
+                tap((user) => {
+                    this._user.next(user);
+                })
+            );
     }
 
     /**
@@ -47,10 +50,31 @@ export class UserService {
      * @param user
      */
     update(user: User): Observable<any> {
-        return this._httpClient.patch<User>('api/common/user', { user }).pipe(
-            map((response) => {
-                this._user.next(response);
+        return this._httpClient
+            .patch<User>(`${this.backendUrl}/profile/update`, user, {
+                withCredentials: true,
             })
-        );
+            .pipe(
+                map((response) => {
+                    this._user.next(response);
+                })
+            );
+    }
+
+    /**
+     * Change Password
+     *
+     * @param user
+     */
+    changePwd(obj): Observable<any> {
+        return this._httpClient
+            .put<User>(`${this.backendUrl}/profile/change-password`, obj, {
+                withCredentials: true,
+            })
+            .pipe(
+                map((response) => {
+                    this._user.next(response);
+                })
+            );
     }
 }

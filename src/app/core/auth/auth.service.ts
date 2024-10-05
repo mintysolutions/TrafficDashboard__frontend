@@ -1,134 +1,35 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
-import { AuthUtils } from 'app/core/auth/auth.utils';
+import { Injectable } from '@angular/core';
 import { UserService } from 'app/core/user/user.service';
-import { catchError, Observable, of, switchMap, throwError } from 'rxjs';
+import { environment } from 'environments/environment';
+import { Observable, catchError, of, switchMap, throwError } from 'rxjs';
+import { User } from '../user/user.types';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+    private backendUrl = environment.backendUrl;
     private _authenticated: boolean = false;
-    private _httpClient = inject(HttpClient);
-    private _userService = inject(UserService);
 
-    // -----------------------------------------------------------------------------------------------------
-    // @ Accessors
-    // -----------------------------------------------------------------------------------------------------
-
-    /**
-     * Setter & getter for access token
-     */
-    set accessToken(token: string) {
-        localStorage.setItem('accessToken', token);
-    }
-
-    get accessToken(): string {
-        return localStorage.getItem('accessToken') ?? '';
-    }
+    constructor(
+        private _httpClient: HttpClient,
+        private _userService: UserService
+    ) {}
 
     // -----------------------------------------------------------------------------------------------------
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
 
     /**
-     * Forgot password
-     *
-     * @param email
+     * Initialize CSRF Token
      */
-    forgotPassword(email: string): Observable<any> {
-        return this._httpClient.post('api/auth/forgot-password', email);
+    private initializeCsrf(): Observable<any> {
+        return this._httpClient.get(`${this.backendUrl}/sanctum/csrf-cookie`, {
+            withCredentials: true,
+        });
     }
 
     /**
-     * Reset password
-     *
-     * @param password
-     */
-    resetPassword(password: string): Observable<any> {
-        return this._httpClient.post('api/auth/reset-password', password);
-    }
-
-    /**
-     * Sign in
-     *
-     * @param credentials
-     */
-    signIn(credentials: { email: string; password: string }): Observable<any> {
-        // Throw error, if the user is already logged in
-        if (this._authenticated) {
-            return throwError('User is already logged in.');
-        }
-
-        return this._httpClient.post('api/auth/sign-in', credentials).pipe(
-            switchMap((response: any) => {
-                // Store the access token in the local storage
-                this.accessToken = response.accessToken;
-
-                // Set the authenticated flag to true
-                this._authenticated = true;
-
-                // Store the user on the user service
-                this._userService.user = response.user;
-
-                // Return a new observable with the response
-                return of(response);
-            })
-        );
-    }
-
-    /**
-     * Sign in using the access token
-     */
-    signInUsingToken(): Observable<any> {
-        // Sign in using the token
-        return this._httpClient
-            .post('api/auth/sign-in-with-token', {
-                accessToken: this.accessToken,
-            })
-            .pipe(
-                catchError(() =>
-                    // Return false
-                    of(false)
-                ),
-                switchMap((response: any) => {
-                    // Replace the access token with the new one if it's available on
-                    // the response object.
-                    //
-                    // This is an added optional step for better security. Once you sign
-                    // in using the token, you should generate a new one on the server
-                    // side and attach it to the response object. Then the following
-                    // piece of code can replace the token with the refreshed one.
-                    if (response.accessToken) {
-                        this.accessToken = response.accessToken;
-                    }
-
-                    // Set the authenticated flag to true
-                    this._authenticated = true;
-
-                    // Store the user on the user service
-                    this._userService.user = response.user;
-
-                    // Return true
-                    return of(true);
-                })
-            );
-    }
-
-    /**
-     * Sign out
-     */
-    signOut(): Observable<any> {
-        // Remove the access token from the local storage
-        localStorage.removeItem('accessToken');
-
-        // Set the authenticated flag to false
-        this._authenticated = false;
-
-        // Return the observable
-        return of(true);
-    }
-
-    /**
-     * Sign up
+     * Register a new user
      *
      * @param user
      */
@@ -136,43 +37,135 @@ export class AuthService {
         name: string;
         email: string;
         password: string;
-        company: string;
+        password_confirmation: string;
     }): Observable<any> {
-        return this._httpClient.post('api/auth/sign-up', user);
+        return this.initializeCsrf().pipe(
+            switchMap(() =>
+                this._httpClient.post(`${this.backendUrl}/register`, user)
+            ),
+            switchMap(() => this.getUser()),
+            catchError((error) => throwError(() => error))
+        );
     }
 
     /**
-     * Unlock session
+     * Login user
      *
      * @param credentials
      */
-    unlockSession(credentials: {
-        email: string;
-        password: string;
-    }): Observable<any> {
-        return this._httpClient.post('api/auth/unlock-session', credentials);
+    signIn(credentials: { email: string; password: string }): Observable<any> {
+        return this.initializeCsrf().pipe(
+            switchMap(() =>
+                this._httpClient.post(`${this.backendUrl}/login`, credentials, {
+                    withCredentials: true,
+                })
+            ),
+            switchMap(() => this.getUser()),
+            catchError((error) => throwError(() => error))
+        );
     }
 
     /**
-     * Check the authentication status
+     * Logout user
+     */
+    signOut(): Observable<any> {
+        return this._httpClient
+            .post(`${this.backendUrl}/logout`, {}, { withCredentials: true })
+            .pipe(
+                switchMap(() => {
+                    this._authenticated = false;
+                    this._userService.user = null;
+                    return of(true);
+                }),
+                catchError((error) => throwError(() => error))
+            );
+    }
+
+    /**
+     * Fetch authenticated user
+     */
+    getUser(): Observable<any> {
+        return this._httpClient
+            .get(`${this.backendUrl}/api/user`, { withCredentials: true })
+            .pipe(
+                switchMap((user: User) => {
+                    console.log('getUser', user);
+                    this._authenticated = true;
+                    this._userService.user = user;
+                    return of(user);
+                }),
+                catchError((error) => {
+                    this._authenticated = false;
+                    this._userService.user = null;
+                    return throwError(() => error);
+                })
+            );
+    }
+
+    /**
+     * Forgot Password
+     *
+     * @param email
+     */
+    forgotPassword(email: string): Observable<any> {
+        return this.initializeCsrf().pipe(
+            switchMap(() =>
+                this._httpClient.post(
+                    `${this.backendUrl}/forgot-password`,
+                    { email },
+                    { withCredentials: true }
+                )
+            ),
+            catchError((error) => throwError(() => error))
+        );
+    }
+
+    /**
+     * Reset Password
+     *
+     * @param data
+     */
+    resetPassword(data: {
+        token: string;
+        email: string;
+        password: string;
+        password_confirmation: string;
+    }): Observable<any> {
+        return this.initializeCsrf().pipe(
+            switchMap(() =>
+                this._httpClient.post(
+                    `${this.backendUrl}/reset-password`,
+                    data,
+                    { withCredentials: true }
+                )
+            ),
+            catchError((error) => throwError(() => error))
+        );
+    }
+
+    /**
+     * Resend Email Verification
+     */
+    resendEmailVerification(): Observable<any> {
+        return this.initializeCsrf().pipe(
+            switchMap(() =>
+                this._httpClient.post(
+                    `${this.backendUrl}/email/verification-notification`,
+                    {},
+                    { withCredentials: true }
+                )
+            ),
+            catchError((error) => throwError(() => error))
+        );
+    }
+
+    /**
+     * Check authentication status
      */
     check(): Observable<boolean> {
-        // Check if the user is logged in
-        if (this._authenticated) {
-            return of(true);
-        }
-
-        // Check the access token availability
-        if (!this.accessToken) {
-            return of(false);
-        }
-
-        // Check the access token expire date
-        if (AuthUtils.isTokenExpired(this.accessToken)) {
-            return of(false);
-        }
-
-        // If the access token exists, and it didn't expire, sign in using it
-        return this.signInUsingToken();
+        return this.getUser().pipe(
+            switchMap(() => of(true)),
+            catchError(() => of(false))
+        );
     }
 }
