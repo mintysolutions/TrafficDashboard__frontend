@@ -3,7 +3,6 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    ViewChild,
     ViewEncapsulation,
     inject,
 } from '@angular/core';
@@ -16,14 +15,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslocoModule } from '@ngneat/transloco';
 import { UserService } from 'app/core/user/user.service';
 import { User } from 'app/core/user/user.types';
-import { CountsCamService } from 'app/modules/admin/counts-cam/counts-cam.service';
-import { ApexOptions, NgApexchartsModule } from 'ng-apexcharts';
+import { CameraListService } from 'app/layout/common/cam-list/cam-list.service';
+import { NgApexchartsModule } from 'ng-apexcharts';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -58,52 +57,52 @@ import { Subject, takeUntil } from 'rxjs';
 })
 export class CountsCamComponent {
     user: User;
-    dataSource = new MatTableDataSource<any>([]);
-    displayedColumns: string[] = ['id', 'cam_ip', 'cam_name', 'code'];
-    selectedRow: any = null;
-    selectedCamCounts: any = null;
-    camCounts: any = null;
-    peaks: any = null;
+    data: any;
     dateRangeForm: FormGroup;
 
-    chartAllCameraCounts: ApexOptions = {};
-    chartScenarioTotalCounts: ApexOptions = {};
-
-    @ViewChild(MatPaginator) paginator: MatPaginator;
+    chartScenarioPeaks: any = {};
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     private _changeDetectorRef = inject(ChangeDetectorRef);
 
     constructor(
         private _userService: UserService,
-        private _countsCamService: CountsCamService,
+        private _camService: CameraListService,
         private _formBuilder: FormBuilder
     ) {}
 
     ngOnInit(): void {
-        // Subscribe to user changes
         this._userService.user$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: User) => {
                 this.user = user;
             });
-        // Get the data
-        this._countsCamService.camList$
+
+        // Subscribe to the camera list and update the dataSource
+        //  this._camService.camList$
+        //  .pipe(takeUntil(this._unsubscribeAll))
+        //  .subscribe((data) => {
+        //      this.dataSource.data = data;
+        //      this._changeDetectorRef.detectChanges();
+        //  });
+
+        // Subscribe to the selected camera ID changes and trigger the fetch function
+        this._camService.camId$
             .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((data) => {
-                this.dataSource.data = data;
+            .subscribe((camId) => {
+                if (camId) {
+                    this.fetchCameraData();
+                }
             });
 
-        // Initialize date range form
+        // Initialize the date range form
         this.dateRangeForm = this._formBuilder.group({
             start: [''],
             end: [''],
         });
-    }
 
-    ngAfterViewInit(): void {
-        // Set the paginator after the view has been initialized
-        this.dataSource.paginator = this.paginator;
+        // Trigger the camera list fetch
+        this._camService.getCamList().subscribe();
     }
 
     ngOnDestroy(): void {
@@ -112,52 +111,19 @@ export class CountsCamComponent {
         this._unsubscribeAll.complete();
     }
 
-    selectRow(row: any): void {
-        if (this.selectedRow?.id !== row.id) {
-            this.selectedRow = row;
-            this.fetchCountsData();
-            this.fetchAllCameraCounts();
-        }
-    }
-
-    fetchAllCameraCounts(): void {
+    fetchCameraData(): void {
         const start = this.dateRangeForm.get('start')?.value;
         const end = this.dateRangeForm.get('end')?.value;
 
         // Fetch selectedCamCounts and update the UI immediately upon success
-        this._countsCamService
-            .getAllCamStats(start, end)
+        this._camService
+            .getCountCameraStats(start, end)
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe({
-                next: (camCounts) => {
-                    console.log('camCounts :>> ', camCounts);
-                    this.camCounts = camCounts;
+                next: (response) => {
+                    console.log('fetchCameraData :>> ', response);
+                    this.data = response;
                     this._prepareChartData();
-                },
-                error: (err) =>
-                    console.error(
-                        'Error fetching detail selectedCamCounts',
-                        err
-                    ),
-            });
-    }
-
-    fetchCountsData(): void {
-        if (!this.selectedRow) {
-            return;
-        }
-
-        const start = this.dateRangeForm.get('start')?.value;
-        const end = this.dateRangeForm.get('end')?.value;
-
-        // Fetch selectedCamCounts and update the UI immediately upon success
-        this._countsCamService
-            .getCamStats(this.selectedRow.id, start, end)
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe({
-                next: (selectedCamCounts) => {
-                    console.log('selectedCamCounts :>> ', selectedCamCounts);
-                    this.selectedCamCounts = selectedCamCounts;
                     this._changeDetectorRef.detectChanges();
                 },
                 error: (err) =>
@@ -168,10 +134,8 @@ export class CountsCamComponent {
             });
     }
 
-    // Filter data based on date range
     filterByDateRange(): void {
-        this.fetchCountsData();
-        this.fetchAllCameraCounts();
+        this.fetchCameraData();
     }
 
     trackByFn(index: number, item: any): any {
@@ -179,17 +143,25 @@ export class CountsCamComponent {
     }
 
     private _prepareChartData(): void {
-        const allCameraCountsLabels = this.camCounts.map(
-            (obj) => obj.camera_ip
-        );
-        const allCameraCountsSeries = [
-            {
-                name: 'Total Objects',
-                type: 'line',
-                data: this.camCounts.map((obj) => obj.total_objects),
-            },
-        ];
-        this.chartAllCameraCounts = {
+        let labels: { [key: string]: string[] } = {};
+        let series: { [key: string]: object[] } = {};
+        let scenarios: string[] = [];
+
+        this.data.time_peaks.forEach((scenarioData) => {
+            const scenarioName = scenarioData.scenario;
+            scenarios.push(scenarioName);
+            labels[scenarioName] = Object.keys(scenarioData.peaks);
+            series[scenarioName] = [
+                {
+                    name: 'Time Peaks',
+                    type: 'column',
+                    data: Object.values(scenarioData.peaks),
+                },
+            ];
+        });
+        console.log('_prepareChartData :>> ', labels);
+        console.log('_prepareChartData :>> ', series);
+        this.chartScenarioPeaks = {
             chart: {
                 fontFamily: 'inherit',
                 foreColor: 'inherit',
@@ -213,7 +185,7 @@ export class CountsCamComponent {
             grid: {
                 borderColor: 'var(--fuse-border)',
             },
-            labels: allCameraCountsLabels,
+            labels: labels,
             legend: {
                 show: false,
             },
@@ -222,7 +194,7 @@ export class CountsCamComponent {
                     columnWidth: '50%',
                 },
             },
-            series: allCameraCountsSeries,
+            series: series,
             states: {
                 hover: {
                     filter: {

@@ -8,7 +8,6 @@ export class CountsCamService {
     private _camList: BehaviorSubject<any> = new BehaviorSubject(null);
     private _camStats: BehaviorSubject<any> = new BehaviorSubject(null);
     private _selectedCamStats: BehaviorSubject<any> = new BehaviorSubject(null);
-    private _camPeaks: BehaviorSubject<any> = new BehaviorSubject(null);
     private backendUrl = environment.backendUrl;
 
     constructor(private _httpClient: HttpClient) {}
@@ -25,26 +24,11 @@ export class CountsCamService {
         return this._selectedCamStats.asObservable();
     }
 
-    get camPeaks$(): Observable<any> {
-        return this._camPeaks.asObservable();
-    }
 
     getCamList(): Observable<any> {
         return this._httpClient.get(`${this.backendUrl}/api/count_cam`).pipe(
             tap((response: any) => {
                 this._camList.next(response);
-            })
-        );
-    }
-
-    getAllCamStats(start?: string, end?: string): Observable<any> {
-        let url = `${this.backendUrl}/api/count_cam/stats`;
-        if (start && end) {
-            url += `?start=${start}&end=${end}`;
-        }
-        return this._httpClient.get(url).pipe(
-            tap((response) => {
-                this._camStats.next(response);
             })
         );
     }
@@ -59,15 +43,5 @@ export class CountsCamService {
                 this._selectedCamStats.next(response);
             })
         );
-    }
-
-    getCamPeaks(): Observable<any> {
-        return this._httpClient
-            .get(`${this.backendUrl}/api/count_cam/peak`)
-            .pipe(
-                tap((response: any) => {
-                    this._camPeaks.next(response);
-                })
-            );
     }
 }

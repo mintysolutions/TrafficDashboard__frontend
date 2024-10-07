@@ -21,6 +21,7 @@ import { SearchComponent } from 'app/layout/common/search/search.component';
 import { ShortcutsComponent } from 'app/layout/common/shortcuts/shortcuts.component';
 import { UserComponent } from 'app/layout/common/user/user.component';
 import { Subject, takeUntil } from 'rxjs';
+import { CamListComponent } from "../../../common/cam-list/cam-list.component";
 
 @Component({
     selector: 'classy-layout',
@@ -28,20 +29,21 @@ import { Subject, takeUntil } from 'rxjs';
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [
-        FuseLoadingBarComponent,
-        FuseVerticalNavigationComponent,
-        NotificationsComponent,
-        UserComponent,
-        MatIconModule,
-        MatButtonModule,
-        LanguagesComponent,
-        FuseFullscreenComponent,
-        SearchComponent,
-        ShortcutsComponent,
-        MessagesComponent,
-        RouterOutlet,
-        QuickChatComponent,
-    ],
+    FuseLoadingBarComponent,
+    FuseVerticalNavigationComponent,
+    NotificationsComponent,
+    UserComponent,
+    MatIconModule,
+    MatButtonModule,
+    LanguagesComponent,
+    FuseFullscreenComponent,
+    SearchComponent,
+    ShortcutsComponent,
+    MessagesComponent,
+    RouterOutlet,
+    QuickChatComponent,
+    CamListComponent
+],
 })
 export class ClassyLayoutComponent implements OnInit, OnDestroy {
     isScreenSmall: boolean;
