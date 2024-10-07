@@ -3,13 +3,6 @@ import { FuseNavigationItem } from '@fuse/components/navigation';
 
 export const defaultNavigation: FuseNavigationItem[] = [
     {
-        id: 'example',
-        title: 'Example',
-        type: 'basic',
-        icon: 'heroicons_outline:chart-pie',
-        link: '/example',
-    },
-    {
         id: 'counts-cam',
         title: 'Counts',
         type: 'basic',
@@ -56,19 +49,47 @@ export const compactNavigation: FuseNavigationItem[] = [
 ];
 export const futuristicNavigation: FuseNavigationItem[] = [
     {
-        id: 'example',
-        title: 'Example',
+        id: 'counts-cam',
+        title: 'Counts',
         type: 'basic',
         icon: 'heroicons_outline:chart-pie',
-        link: '/example',
+        link: '/counts-cam',
+    },
+    {
+        id: 'speed-cam',
+        title: 'Speed',
+        type: 'basic',
+        icon: 'heroicons_outline:speedometer',
+        link: '/speed-cam',
+    },
+    {
+        id: 'height-cam',
+        title: 'Height',
+        type: 'basic',
+        icon: 'heroicons_outline:ruler',
+        link: '/height-cam',
     },
 ];
 export const horizontalNavigation: FuseNavigationItem[] = [
     {
-        id: 'example',
-        title: 'Example',
+        id: 'counts-cam',
+        title: 'Counts',
         type: 'basic',
         icon: 'heroicons_outline:chart-pie',
-        link: '/example',
+        link: '/counts-cam',
+    },
+    {
+        id: 'speed-cam',
+        title: 'Speed',
+        type: 'basic',
+        icon: 'heroicons_outline:speedometer',
+        link: '/speed-cam',
+    },
+    {
+        id: 'height-cam',
+        title: 'Height',
+        type: 'basic',
+        icon: 'heroicons_outline:ruler',
+        link: '/height-cam',
     },
 ];
