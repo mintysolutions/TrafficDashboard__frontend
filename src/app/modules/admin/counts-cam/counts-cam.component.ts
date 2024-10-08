@@ -78,14 +78,6 @@ export class CountsCamComponent {
                 this.user = user;
             });
 
-        // Subscribe to the camera list and update the dataSource
-        //  this._camService.camList$
-        //  .pipe(takeUntil(this._unsubscribeAll))
-        //  .subscribe((data) => {
-        //      this.dataSource.data = data;
-        //      this._changeDetectorRef.detectChanges();
-        //  });
-
         // Subscribe to the selected camera ID changes and trigger the fetch function
         this._camService.camId$
             .pipe(takeUntil(this._unsubscribeAll))
@@ -124,13 +116,9 @@ export class CountsCamComponent {
                     console.log('fetchCameraData :>> ', response);
                     this.data = response;
                     this._prepareChartData();
-                    this._changeDetectorRef.detectChanges();
+                    this._changeDetectorRef.markForCheck();
                 },
-                error: (err) =>
-                    console.error(
-                        'Error fetching detail selectedCamCounts',
-                        err
-                    ),
+                error: (err) => console.error(err),
             });
     }
 

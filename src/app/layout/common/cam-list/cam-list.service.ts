@@ -51,11 +51,13 @@ export class CameraListService {
         this._camId.next(id);
     }
 
-    getCountCameraStats(start?: string, end?: string): Observable<any> {
+    getCountCameraStats(start?: Date, end?: Date): Observable<any> {
         console.log('this._camId :>> ', this._camId.value);
         let url = `${this.backendUrl}/api/count_cam/${this._camId.value}/stats`;
         if (start && end) {
-            url += `?start=${start}&end=${end}`;
+            const formattedStartDate = start.toISOString().split('T')[0]; // '2024-10-01'
+            const formattedEndDate = end.toISOString().split('T')[0]; // '2024-10-07'
+            url += `?start=${formattedStartDate}&end=${formattedEndDate}`;
         }
         return this._httpClient.get(url).pipe(tap((response) => {}));
     }
