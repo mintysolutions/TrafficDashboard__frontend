@@ -5,18 +5,10 @@ quick-chat {
         overflow: hidden;
     }
 
-    &.quick-chat-opened {
-        > div {
-            overflow: visible;
-        }
-    }
-
-    &:not(.quick-chat-opened) {
-        > div {
-            overflow: visible;
-            animation: addOverflowHidden 1ms linear 400ms;
-            animation-fill-mode: forwards;
-        }
+    > div {
+        overflow: visible;
+        animation: addOverflowHidden 1ms linear 400ms;
+        animation-fill-mode: forwards;
     }
 }
 

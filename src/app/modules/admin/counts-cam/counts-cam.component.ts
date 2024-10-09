@@ -139,6 +139,15 @@ export class CountsCamComponent {
             const scenarioName = scenarioData.scenario;
             scenarios.push(scenarioName);
             labels[scenarioName] = Object.keys(scenarioData.peaks);
+            labels[scenarioName] = Object.keys(scenarioData.peaks).map(
+                (key) => {
+                    const start = key.split(':')[0];
+                    let startHour = parseInt(start);
+                    let endHour = (startHour + 1) % 24;
+
+                    return `${startHour}`;
+                }
+            );
             series[scenarioName] = [
                 {
                     name: 'Time Peaks',
